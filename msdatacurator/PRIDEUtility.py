@@ -61,37 +61,47 @@ class PRIDEUtility:
 
         Returns:
             bool: True if download is successful, False otherwise.
-        """
+        """      
         dataset_path = self.dataset_paths.get(dataset_identifier)
-        print(dataset_path)
 
         if not dataset_path:
             print(f"Dataset {dataset_identifier} not found.")
             return False
 
+        local_directory = dataset_identifier
+        os.makedirs(local_directory, exist_ok=True)  # Create local directory if not exists
+
         with FTP(self.ftp_host) as ftp:
             try:
                 ftp.login()
-                ftp.cwd(dataset_path)
-                # List all files in the dataset directory
-                files = ftp.nlst()
+                ftp.set_pasv(True)  # Use passive mode
 
-                # Filter files based on the desired format
+                # Check if the "generated" subdirectory exists
+                generated_subdirectory = os.path.join(dataset_path, "generated").replace("\\", "/")
+                
+                all_files = ftp.nlst(dataset_path)
+                for file in all_files: 
+                    if file.lower().endswith("generated"):
+                        ftp.cwd(generated_subdirectory)
+                        # List all files in the "generated" subdirectory                        
+                        files = ftp.nlst()                
+                    else:
+                        # List all files in the main directory
+                        files = all_files                                
+            
                 if file_format.lower() == "raw":
                     filtered_files = [f for f in files if f.lower().endswith(".raw")]
                 elif file_format.lower() == "mgf":
                     filtered_files = [f for f in files if f.lower().endswith(".mgf")]
                 elif file_format.lower() == "mgf.gz":
-                    filtered_files = [f for f in files if f.lower().endswith(".mgf.gz")]
+                    filtered_files = [f for f in files if f.lower().endswith(".mgf.gz")]                    
                 else:
                     raise ValueError("Invalid file format. Choose 'raw', 'mgf', or 'mgf.gz'.")
 
-                # Download each file
                 for remote_filename in filtered_files:
-                    local_filename = os.path.join(dataset_identifier, remote_filename)
+                    local_filename = os.path.join(local_directory, "generated", remote_filename) if "generated" in all_files else os.path.join(local_directory, remote_filename)
                     with open(local_filename, "wb") as local_file:
-                        # Download files directly
-                        ftp.retrbinary(f"RETR {remote_filename}", local_file.write)               
+                        ftp.retrbinary(f"RETR {remote_filename}", local_file.write)
 
                 return True
             except Exception as e:
