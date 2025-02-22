@@ -177,8 +177,7 @@ def main():
             # Print the project identifier and its associated FTP location
             print(f"Project: {identifier}")
             print(f"FTP Location: {project.url}")
-            print()
-            print("test");
+            print()            
 
         except Exception as e:
             print(f"Error processing project {identifier}: {e}")
