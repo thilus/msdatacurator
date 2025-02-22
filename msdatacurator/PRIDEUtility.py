@@ -2,6 +2,7 @@ from ftplib import FTP
 import os
 import gzip
 import pickle
+import shutil 
 
 class PRIDEUtility:
     def __init__(self, ftp_host, ftp_path):
@@ -102,6 +103,13 @@ class PRIDEUtility:
                     local_filename = os.path.join(local_directory, "generated", remote_filename) if "generated" in all_files else os.path.join(local_directory, remote_filename)
                     with open(local_filename, "wb") as local_file:
                         ftp.retrbinary(f"RETR {remote_filename}", local_file.write)
+
+                    # Extract .mgf.gz files if needed
+                    if file_format.lower() == "mgf.gz" and local_filename.endswith(".mgf.gz"):
+                        with gzip.open(local_filename, 'rb') as f_in:
+                            with open(local_filename[:-3], 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                        os.remove(local_filename)  # Remove the .mgf.gz file after extraction
 
                 return True
             except Exception as e:
