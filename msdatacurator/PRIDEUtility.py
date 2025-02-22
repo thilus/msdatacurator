@@ -2,7 +2,8 @@ from ftplib import FTP
 import os
 import gzip
 import pickle
-import shutil 
+import shutil
+import csv  
 
 class PRIDEUtility:
     def __init__(self, ftp_host, ftp_path):
@@ -17,7 +18,6 @@ class PRIDEUtility:
         self.ftp_path = ftp_path
         self.dataset_paths = None  # Dictionary to store dataset paths
 
-    
     def _load_dataset_paths(self):
         """
         Lazy-loads the dataset paths and creates the dataset_paths dictionary.
@@ -30,7 +30,7 @@ class PRIDEUtility:
                     ftp.cwd(self.ftp_path)
                     years = ftp.nlst()
                     for year in years:
-                        if year == '2010':                            
+                        if year == '2010':
                             year_path = f"{self.ftp_path}/{year}"
                             indices = ftp.nlst(year_path)
                             for index in indices:
@@ -62,7 +62,7 @@ class PRIDEUtility:
 
         Returns:
             bool: True if download is successful, False otherwise.
-        """      
+        """
         dataset_path = self.dataset_paths.get(dataset_identifier)
 
         if not dataset_path:
@@ -79,23 +79,23 @@ class PRIDEUtility:
 
                 # Check if the "generated" subdirectory exists
                 generated_subdirectory = os.path.join(dataset_path, "generated").replace("\\", "/")
-                
+
                 all_files = ftp.nlst(dataset_path)
-                for file in all_files: 
+                for file in all_files:
                     if file.lower().endswith("generated"):
                         ftp.cwd(generated_subdirectory)
-                        # List all files in the "generated" subdirectory                        
-                        files = ftp.nlst()                
+                        # List all files in the "generated" subdirectory
+                        files = ftp.nlst()
                     else:
                         # List all files in the main directory
-                        files = all_files                                
-            
+                        files = all_files
+
                 if file_format.lower() == "raw":
                     filtered_files = [f for f in files if f.lower().endswith(".raw")]
                 elif file_format.lower() == "mgf":
                     filtered_files = [f for f in files if f.lower().endswith(".mgf")]
                 elif file_format.lower() == "mgf.gz":
-                    filtered_files = [f for f in files if f.lower().endswith(".mgf.gz")]                    
+                    filtered_files = [f for f in files if f.lower().endswith(".mgf.gz")]
                 else:
                     raise ValueError("Invalid file format. Choose 'raw', 'mgf', or 'mgf.gz'.")
 
@@ -143,7 +143,6 @@ class PRIDEUtility:
             ftp.cwd(year_path)
             return ftp.nlst()
 
-
     def write_datasets_to_csv(self, datasets, csv_filename="datasets_list.csv"):
         """
         Writes the list of datasets to a CSV file.
@@ -177,14 +176,14 @@ if __name__ == "__main__":
         pickle.dump(dataset_paths, file)
     print("Dataset paths saved locally.")
 
-    # Exemplary data set 
+    # Exemplary data set
     dataset_id = "PRD000817"
     success = pride_utility.download_dataset(dataset_id, file_format="mgf.gz")
     if success:
         print(f"Dataset {dataset_id} downloaded successfully.")
     else:
         print(f"Failed to download dataset {dataset_id}.")
-    
+
     # Write dataset list to a CSV file
-    #csv_filename = "datasets_list.csv"
-    #pride_utility.write_datasets_to_csv(datasets, csv_filename)
+    # csv_filename = "datasets_list.csv"
+    # pride_utility.write_datasets_to_csv(datasets, csv_filename)
