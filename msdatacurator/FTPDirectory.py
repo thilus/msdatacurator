@@ -178,6 +178,7 @@ def main():
             print(f"Project: {identifier}")
             print(f"FTP Location: {project.url}")
             print()
+            print("test");
 
         except Exception as e:
             print(f"Error processing project {identifier}: {e}")
